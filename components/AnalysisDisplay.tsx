@@ -26,11 +26,31 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
 }) => {
   // Parse the critical moment content from the analysis
   const parseCriticalMoment = (analysis: string) => {
-    // Extract content between <critical_moment> tags
+    // Check if this is a structured analysis format (starts with ##)
+    if (analysis.startsWith('## Critical Moment:')) {
+      // Parse structured format
+      const titleMatch = analysis.match(/##\s*Critical Moment:\s*(.+?)(?:\n|$)/);
+      const explanationMatch = analysis.match(/\*\*Explanation:\*\*\s*([\s\S]*?)(?=\*\*Recommendation:|$)/);
+      const recommendationMatch = analysis.match(/\*\*Recommendation:\*\*\s*`([^`]+)`/);
+      const whyBetterMatch = analysis.match(/\*\*Why it's better:\*\*\s*([\s\S]*?)(?=\*\*Principle:|$)/);
+      const principleMatch = analysis.match(/\*\*Principle:\*\*\s*([\s\S]*?)$/);
+      
+      return {
+        title: titleMatch ? titleMatch[1].trim() : 'Critical Moment',
+        move: '', // Will be filled from moveInfo
+        explanation: explanationMatch ? explanationMatch[1].trim() : '',
+        recommendation: recommendationMatch ? recommendationMatch[1].trim() : '',
+        whyBetter: whyBetterMatch ? whyBetterMatch[1].trim() : '',
+        principle: principleMatch ? principleMatch[1].trim() : '',
+        fullContent: analysis
+      };
+    }
+    
+    // Legacy parsing for old markdown format with <critical_moment> tags
     const criticalMomentMatch = analysis.match(/<critical_moment>([\s\S]*?)<\/critical_moment>/);
     const content = criticalMomentMatch ? criticalMomentMatch[1].trim() : analysis;
     
-    // Parse different sections
+    // Parse different sections from legacy format
     const titleMatch = content.match(/##\s*Critical Moment \d+:\s*(.+?)(?:\n|$)/);
     const moveMatch = content.match(/###\s*\*\*(.+?)\*\*/);
     const explanationMatch = content.match(/\*\*Explanation:\*\*\s*([\s\S]*?)(?=\*\*Recommendation:|$)/);
@@ -88,7 +108,7 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
           <Target className="h-16 w-16 text-gray-400 mb-4" />
           <CardTitle className="text-lg mb-2">No Analysis Yet</CardTitle>
           <CardDescription>
-            Click the "Analyze Game" button to start analyzing critical moments in your game.
+            Click the &quot;Analyze Game&quot; button to start analyzing critical moments in your game.
           </CardDescription>
         </CardContent>
       </Card>
@@ -176,7 +196,7 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                   <div className="font-medium font-mono">{currentMomentData.bestMove}</div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">Opponent's Best</div>
+                  <div className="text-muted-foreground">Opponent&apos;s Best</div>
                   <div className="font-medium font-mono">{currentMomentData.opponentsBestMove}</div>
                 </div>
                 <div>
@@ -232,7 +252,7 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
               {parsedMoment.whyBetter && (
                 <div>
                   <h4 className="font-semibold text-sm text-muted-foreground mb-2">
-                    WHY IT'S BETTER
+                    WHY IT&apos;S BETTER
                   </h4>
                   <div className="prose prose-sm max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>

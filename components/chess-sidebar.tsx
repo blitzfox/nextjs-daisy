@@ -247,45 +247,19 @@ export function ChessSidebar({
             <div className="space-y-2">
               <h3 className="font-medium text-sm flex items-center gap-2">
                 <Zap className="size-4" />
-                Analysis Controls
+                Analysis Status
               </h3>
-              <Button 
-                onClick={onAnalyze}
-                disabled={isAnalyzing}
-                className="w-full"
-                size="sm"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Activity className="size-3 mr-2 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Target className="size-3 mr-2" />
-                    Find Critical Moments
-                  </>
-                )}
-              </Button>
               
-              <Button
-                onClick={onToggleVoice}
-                variant="outline"
-                size="sm"
-                className="w-full"
-              >
-                {voiceEnabled ? (
-                  <>
-                    <Volume2 className="size-3 mr-2" />
-                    Voice: ON
-                  </>
-                ) : (
-                  <>
-                    <VolumeX className="size-3 mr-2" />
-                    Voice: OFF
-                  </>
-                )}
-              </Button>
+              {criticalMoments.length > 0 ? (
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>✓ {criticalMoments.length} critical moments found</p>
+                  <p>Voice analysis: {voiceEnabled ? 'Enabled' : 'Disabled'}</p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Use the main controls above to start analysis
+                </p>
+              )}
             </div>
           </div>
         )}

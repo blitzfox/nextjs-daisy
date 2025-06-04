@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { zodResponseFormat } from "openai/helpers/zod";
 import { Chess } from 'chess.js';
 import { AnalysisRequest, AnalysisResponse, CriticalMoment } from '@/lib/types';
+import { 
+  CriticalMomentsExtractionSchema,
+  MomentAnalysisSchema,
+  type CriticalMomentExtraction,
+  type MomentAnalysis
+} from '@/lib/schemas/analysis';
 import { 
   extraction_prompt, 
   extraction_system_prompt,
@@ -155,7 +162,7 @@ async function handleRegularRequest(request: NextRequest) {
       engineAnalysis = await analyzeWithMockEngine(chess);
     }
     
-    // Extract critical moments using OpenAI with proper prompts
+    // Extract critical moments using OpenAI with structured outputs
     const colorToAnalysis = body.colorToAnalysis || 'White';
     const criticalMoments = await extractCriticalMoments(engineAnalysis, colorToAnalysis);
     
@@ -281,7 +288,7 @@ function generateOpponentsBest(bestMove: string): string {
   return responses[Math.floor(Math.random() * responses.length)];
 }
 
-// Function to extract critical moments using OpenAI with proper prompts
+// Function to extract critical moments using OpenAI with structured outputs
 async function extractCriticalMoments(
   engineAnalysis: string,
   colorToAnalysis: string
@@ -292,8 +299,65 @@ async function extractCriticalMoments(
     .replace('{analysis}', engineAnalysis);
 
   try {
+    const response = await openai.beta.chat.completions.parse({
+      model: "gpt-4o-2024-08-06",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      response_format: zodResponseFormat(CriticalMomentsExtractionSchema, "critical_moments"),
+      temperature: 0.3,
+    });
+    
+    const parsedData = response.choices[0].message.parsed;
+    if (!parsedData) {
+      throw new Error('No parsed data in OpenAI response');
+    }
+    
+    // Convert to our CriticalMoment type
+    const criticalMoments: CriticalMoment[] = parsedData.critical_moments.map((moment, index) => {
+      return {
+        id: index + 1,
+        position: 0, // Will be calculated later
+        moveNumber: moment.move_number,
+        moveInfo: moment.move_info,
+        evaluation: moment.evaluation.toString(),
+        bestMove: moment.best_move,
+        opponentsBestMove: moment.opponents_best_move || "",
+        fen: moment.fen,
+        continuation: moment.continuation,
+        fullLine: moment.full_line,
+        phase: moment.phase,
+        reason: moment.reason,
+        analysis: "", // Will be filled by individual prompts
+        circle: "",
+        summary: `Critical moment ${index + 1}: ${moment.reason}`
+      };
+    });
+    
+    return criticalMoments;
+  } catch (error: any) {
+    console.error('Error extracting critical moments with structured outputs:', error);
+    
+    // If structured output fails, fallback to the old method
+    console.log('Falling back to manual JSON parsing...');
+    return await extractCriticalMomentsLegacy(engineAnalysis, colorToAnalysis);
+  }
+}
+
+// Legacy function for backward compatibility
+async function extractCriticalMomentsLegacy(
+  engineAnalysis: string,
+  colorToAnalysis: string
+): Promise<CriticalMoment[]> {
+  const systemPrompt = extraction_system_prompt;
+  const userPrompt = extraction_prompt
+    .replace('{color_to_analysis}', colorToAnalysis)
+    .replace('{analysis}', engineAnalysis);
+
+  try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4.1",
+      model: "gpt-4o",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -357,7 +421,7 @@ async function extractCriticalMoments(
     
     return criticalMoments;
   } catch (error: any) {
-    console.error('Error extracting critical moments with OpenAI:', error);
+    console.error('Error extracting critical moments with legacy method:', error);
     throw error;
   }
 }
@@ -404,9 +468,39 @@ async function processStreamingMoments(
         progress: 50 + (momentNum * 10)
       });
       
-      // Use standard chat completions API for streaming
+      // Try structured output first for consistency
+      try {
+        const structuredResponse = await openai.beta.chat.completions.parse({
+          model: "gpt-4o-2024-08-06",
+          messages: [
+            { role: "user", content: filledPrompt }
+          ],
+          response_format: zodResponseFormat(MomentAnalysisSchema, "moment_analysis"),
+          temperature: 0.7,
+        });
+        
+        const analysisData = structuredResponse.choices[0].message.parsed;
+        if (analysisData) {
+          const formattedAnalysis = formatMomentAnalysis(analysisData);
+          
+          sendEvent('moment_complete', { 
+            momentNumber: momentNum, 
+            message: `Moment ${momentNum} analysis complete!`,
+            analysis: formattedAnalysis
+          });
+          
+          return {
+            ...moment,
+            analysis: formattedAnalysis
+          };
+        }
+      } catch (structuredError) {
+        console.log(`Structured output failed for moment ${momentNum}, falling back to streaming...`);
+      }
+      
+      // Fallback to streaming for real-time updates
       const stream = await openai.chat.completions.create({
-        model: "gpt-4.1",
+        model: "gpt-4o",
         messages: [
           { role: "user", content: filledPrompt }
         ],
@@ -505,36 +599,37 @@ async function processMomentsWithIndividualPrompts(
       .replace(/{previous_assessment}/g, previousAssessment);
     
     try {
-      // Add small random delay to avoid rate limiting (like Python version)
+      // Add small random delay to avoid rate limiting
       const delay = 1000 + Math.random() * 2000; // 1-3 seconds
       await new Promise(resolve => setTimeout(resolve, delay));
       
-      const response = await openai.chat.completions.create({
-        model: "gpt-4.1",
+      const response = await openai.beta.chat.completions.parse({
+        model: "gpt-4o-2024-08-06",
         messages: [
           { role: "user", content: filledPrompt }
         ],
+        response_format: zodResponseFormat(MomentAnalysisSchema, "moment_analysis"),
         temperature: 0.7,
       });
       
-      const analysis = response.choices[0].message.content || 
-        `Analysis for moment ${i + 1} could not be generated.`;
+      const analysisData = response.choices[0].message.parsed;
+      if (!analysisData) {
+        throw new Error(`No parsed analysis for moment ${i + 1}`);
+      }
       
-      // Extract the critical moment section from the response
-      const criticalMomentMatch = analysis.match(/<critical_moment>([\s\S]*?)<\/critical_moment>/);
-      const finalAnalysis = criticalMomentMatch ? criticalMomentMatch[1].trim() : analysis;
+      // Format the structured analysis into readable text
+      const formattedAnalysis = formatMomentAnalysis(analysisData);
       
       return {
         ...moment,
-        analysis: finalAnalysis
+        analysis: formattedAnalysis
       };
       
     } catch (error) {
-      console.error(`Error processing moment ${i + 1}:`, error);
-      return {
-        ...moment,
-        analysis: `Analysis for moment ${i + 1} could not be generated due to an error.`
-      };
+      console.error(`Error processing moment ${i + 1} with structured output:`, error);
+      
+      // Fallback to legacy method
+      return await processMomentLegacy(moment, filledPrompt, i + 1);
     }
   });
   
@@ -544,4 +639,53 @@ async function processMomentsWithIndividualPrompts(
   console.log('All moments processed in parallel!');
   
   return processedMoments;
+}
+
+// Helper function to format structured moment analysis
+function formatMomentAnalysis(analysis: MomentAnalysis): string {
+  return `## Critical Moment: ${analysis.title}
+
+**Explanation:** ${analysis.explanation}
+
+**Recommendation:** \`${analysis.recommendation}\`
+
+**Why it's better:** ${analysis.why_better}
+
+**Principle:** ${analysis.principle}`;
+}
+
+// Legacy fallback for individual moment processing
+async function processMomentLegacy(
+  moment: CriticalMoment,
+  filledPrompt: string,
+  momentNum: number
+): Promise<CriticalMoment> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "user", content: filledPrompt }
+      ],
+      temperature: 0.7,
+    });
+    
+    const analysis = response.choices[0].message.content || 
+      `Analysis for moment ${momentNum} could not be generated.`;
+    
+    // Extract the critical moment section from the response
+    const criticalMomentMatch = analysis.match(/<critical_moment>([\s\S]*?)<\/critical_moment>/);
+    const finalAnalysis = criticalMomentMatch ? criticalMomentMatch[1].trim() : analysis;
+    
+    return {
+      ...moment,
+      analysis: finalAnalysis
+    };
+    
+  } catch (error) {
+    console.error(`Error processing moment ${momentNum} with legacy method:`, error);
+    return {
+      ...moment,
+      analysis: `Analysis for moment ${momentNum} could not be generated due to an error.`
+    };
+  }
 }

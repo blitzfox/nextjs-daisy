@@ -89,45 +89,67 @@ class ChessEngineAnalyzer {
     winChance: number, 
     continuation: string[]
   ): PositionAnalysis {
-    let movePlayed = "Starting Position";
-    let moveNumber = "Start";
-    
-    if (positionIndex > 0 && positionIndex <= this.gameMoves.length) {
-      const moveIdx = positionIndex - 1;
-      const fullMoveNum = Math.floor(moveIdx / 2) + 1;
-      const isWhite = moveIdx % 2 === 0;
-      
-      if (isWhite) {
-        moveNumber = `${fullMoveNum}.`;
-        movePlayed = `${fullMoveNum}. ${this.gameMoves[moveIdx]}`;
-      } else {
-        moveNumber = `${fullMoveNum}...`;
-        movePlayed = `${fullMoveNum}... ${this.gameMoves[moveIdx]}`;
-      }
-    }
-
-    const currentFen = positionIndex < this.currentPositions.length ? 
-      this.currentPositions[positionIndex] : "";
-    
-    // Generate opponent's best move (simplified logic)
-    const opponentsBest = this.generateOpponentsBest(bestMove);
-    
+    // Basic structure - move info will be updated in the main analysis loop
     return {
-      fen: currentFen,
-      moveNumber,
-      movePlayed,
+      fen: "", // Will be set in main loop
+      moveNumber: "", // Will be set in main loop
+      movePlayed: "", // Will be set in main loop
       evaluation: evalScore,
       winChance,
-      bestMove,
-      opponentsBestMove: opponentsBest,
+      bestMove, // This is now the best move for the player who was about to move
+      opponentsBestMove: "", // Will be set in main loop
       continuation
     };
   }
 
   private generateOpponentsBest(bestMove: string): string {
-    // Simple heuristic for opponent response
-    const commonResponses = ['Nf6', 'e5', 'd6', 'Bc5', 'Qh5', 'O-O', 'h6', 'a6', 'c5', 'Nc6'];
-    return commonResponses[Math.floor(Math.random() * commonResponses.length)];
+    // Improved heuristic for opponent response based on common chess principles
+    // This is still simplified but much better than random moves
+    
+    const move = bestMove.toLowerCase();
+    
+    // Opening principles for common first moves
+    if (move === 'e4') {
+      return 'e5'; // Most principled response to 1.e4
+    }
+    if (move === 'd4') {
+      return 'd5'; // Most principled response to 1.d4
+    }
+    if (move === 'nf3') {
+      return 'Nf6'; // Symmetric development
+    }
+    if (move === 'nc3') {
+      return 'Nc6'; // Symmetric development
+    }
+    
+    // Responses to common Black openings
+    if (move === 'e5') {
+      return 'Nf3'; // Italian/Spanish setup
+    }
+    if (move === 'd5') {
+      return 'c4'; // Queen's Gambit
+    }
+    if (move === 'nf6') {
+      return 'Bg5'; // Pin the knight or Nf3
+    }
+    if (move === 'c5') {
+      return 'Nc3'; // Sicilian development
+    }
+    
+    // Middle game responses
+    if (move.includes('o-o') || move === 'o-o') {
+      return 'O-O'; // Castle in response
+    }
+    if (move.startsWith('q')) {
+      return 'Nf3'; // Develop pieces when opponent brings queen out early
+    }
+    if (move.startsWith('b')) {
+      return 'a6'; // Prevent piece placement or prepare expansion
+    }
+    
+    // Generic development moves if no specific response found
+    const genericResponses = ['Nf3', 'Nc3', 'Nf6', 'Nc6', 'd6', 'e6', 'c6', 'a6'];
+    return genericResponses[Math.floor(Math.random() * genericResponses.length)];
   }
 
   private async createWebSocketConnection(): Promise<any> {
@@ -294,13 +316,36 @@ class ChessEngineAnalyzer {
       try {
         const ws = await this.createWebSocketConnection();
         
-        // Analyze positions sequentially - ALL positions like Python version
+        // FIX: Analyze positions BEFORE moves are played to get the best move for the player about to move
         const maxPositions = Math.min(this.currentPositions.length, positionsToAnalyze + 1); // +1 for start position
         for (let i = 1; i < maxPositions; i++) { // Skip starting position
           this.currentPositionIndex = i;
           
           try {
-            const analysis = await this.analyzePositionWithEngine(ws, this.currentPositions[i]);
+            // Analyze the position BEFORE the move to get the best move for the player about to move
+            const positionBeforeMove = this.currentPositions[i - 1];
+            const analysis = await this.analyzePositionWithEngine(ws, positionBeforeMove);
+            
+            // Update the analysis with the correct move information
+            const moveIdx = i - 1;
+            const fullMoveNum = Math.floor(moveIdx / 2) + 1;
+            const isWhite = moveIdx % 2 === 0;
+            
+            if (isWhite) {
+              analysis.moveNumber = `${fullMoveNum}.`;
+              analysis.movePlayed = `${fullMoveNum}. ${this.gameMoves[moveIdx]}`;
+            } else {
+              analysis.moveNumber = `${fullMoveNum}...`;
+              analysis.movePlayed = `${fullMoveNum}... ${this.gameMoves[moveIdx]}`;
+            }
+            
+            // Set the FEN to the position AFTER the move for reference
+            analysis.fen = this.currentPositions[i];
+            
+            // Now analysis.bestMove is the best move for the player who was about to move
+            // Generate a proper opponent's response to that best move
+            analysis.opponentsBestMove = this.generateOpponentsBest(analysis.bestMove);
+            
             this.analysisResults.push(analysis);
             
             // Remove artificial delay - Python version has no delays between requests

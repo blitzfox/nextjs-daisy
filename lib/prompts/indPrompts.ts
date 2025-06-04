@@ -313,15 +313,32 @@ export const extraction_prompt = `You are a chess Grandmaster tasked with analyz
 
 Below is the engine analysis table for the chess game. Each row represents a move, including its evaluation and other relevant information:
 
+IMPORTANT: You must analyze moves from the perspective of {color_to_analysis} ONLY.
+
+**Move Number Format Guide:**
+- Moves like "1.", "2.", "3.", etc. (with period) = WHITE moves
+- Moves like "1...", "2...", "3...", etc. (with three dots) = BLACK moves
+
+**Critical Selection Rules:**
+- If analyzing WHITE: Only select rows where Move Number ends with "." (like "1.", "2.", "3.")
+- If analyzing BLACK: Only select rows where Move Number ends with "..." (like "1...", "2...", "3...")
+- NEVER mix colors - all 4 moments must be from the same color perspective
+
 Please follow these steps to complete the analysis:
     
 Important criteria for selecting moments:
 Look for:
-- Major evaluation swings of at least +1 or -1
-- Key tactical opportunities (missed or found)
-- Critical strategic decisions
-- Turning points in the game
+- Major evaluation swings of at least +1 or -1 FROM THE PERSPECTIVE OF {color_to_analysis}
+- Key tactical opportunities (missed or found) BY {color_to_analysis}
+- Critical strategic decisions MADE BY {color_to_analysis}
+- Turning points in the game WHERE {color_to_analysis} had choices
 - Consider both objective evaluation changes and human understanding
+
+EVALUATION INTERPRETATION:
+- Positive evaluations (+0.5, +2.1, etc.) favor WHITE
+- Negative evaluations (-0.5, -2.1, etc.) favor BLACK
+- When analyzing WHITE: Look for moments where White could have maintained/improved positive evaluations
+- When analyzing BLACK: Look for moments where Black could have maintained/improved negative evaluations (closer to 0 or positive for Black's perspective)
 
 You must respond with a valid JSON object containing exactly 4 moments in chronological order.
 Each moment must include these exact fields: 
@@ -341,7 +358,7 @@ Example format:
     "critical_moments": [
         {{
             "move_info": "e4",
-            "move_number": "10",
+            "move_number": "1.",
             "best_move": "Bd3",
             "evaluation": -2.16,
             "opponents_best_move": "Qxd4",
@@ -358,7 +375,7 @@ Here is the engine analysis table to analyze:
 
 {analysis}
 
-Remember: Return exactly 4 moments in chronological order, with all required fields including the previous move for context.`;
+Remember: Return exactly 4 moments in chronological order, with all required fields including the previous move for context. ENSURE ALL MOMENTS ARE FROM THE {color_to_analysis} PERSPECTIVE ONLY.`;
 
 export const extraction_system_prompt = `You are an expert chess coach with Grandmaster-level understanding of chess positions and engine evaluations. Your role is to provide deep insights into chess games by analyzing critical moments from provided engine data. You excel at:
 

@@ -26,7 +26,9 @@ import {
   PlayCircle,
   Eye,
   Brain,
-  Star
+  Star,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 export default function Home() {
@@ -219,7 +221,7 @@ export default function Home() {
                   <Gamepad className="mx-auto h-12 w-12 text-gray-300 mb-3" />
                   <p className="text-gray-500 font-medium mb-1 text-sm">No games loaded yet</p>
                   <p className="text-gray-400 text-xs">
-                    Enter your username and click "Get Games" to see your recent games
+                    Enter your username and click &quot;Get Games&quot; to see your recent games
                   </p>
                 </div>
               )}
@@ -245,6 +247,105 @@ export default function Home() {
                   </Badge>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Analysis Controls Toolbar - Key Actions */}
+        {selectedGame && (
+          <Card className="bg-gradient-to-r from-purple-50 via-blue-50 to-indigo-50 border-purple-200 shadow-xl mb-8">
+            <CardContent className="p-6">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl shadow-lg">
+                    <Zap className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg">AI Analysis Controls</h3>
+                    <p className="text-gray-600 text-sm">Discover critical moments and get voice insights</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  {/* Main Analysis Button */}
+                  <Button 
+                    onClick={handleAnalyze}
+                    disabled={isAnalyzing}
+                    size="lg"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Target className="h-4 w-4 mr-2" />
+                        Find Critical Moments
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Voice Toggle Button */}
+                  <Button
+                    onClick={toggleVoice}
+                    variant={voiceEnabled ? "default" : "outline"}
+                    size="lg"
+                    className={voiceEnabled 
+                      ? "bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                      : "border-2 border-blue-500 text-blue-600 hover:bg-blue-50 shadow-md hover:shadow-lg transition-all duration-300"
+                    }
+                  >
+                    {voiceEnabled ? (
+                      <>
+                        <Volume2 className="h-4 w-4 mr-2" />
+                        Voice: ON
+                      </>
+                    ) : (
+                      <>
+                        <VolumeX className="h-4 w-4 mr-2" />
+                        Voice: OFF
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Progress/Status Indicator */}
+              {criticalMoments.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-purple-200">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="text-sm">
+                      <span className="text-gray-600 font-medium">
+                        Analysis Complete: {criticalMoments.length} critical moments found
+                      </span>
+                      <Badge className="ml-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+                        Ready for Review
+                      </Badge>
+                    </div>
+                    
+                    {/* Quick Moment Navigation */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-600 mr-2">Jump to:</span>
+                      {criticalMoments.slice(0, 4).map((moment, index) => (
+                        <Button
+                          key={index}
+                          onClick={() => handleMomentChange(index + 1)}
+                          variant={currentMoment === index + 1 ? "default" : "outline"}
+                          size="sm"
+                          className={currentMoment === index + 1
+                            ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md hover:shadow-lg"
+                            : "border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
+                          }
+                        >
+                          Moment {index + 1}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
