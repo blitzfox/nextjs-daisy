@@ -57,30 +57,6 @@ import {
 const data = {
   navMain: [
     {
-      title: "Game Analysis",
-      url: "#",
-      icon: Activity,
-      isActive: true,
-      items: [
-        {
-          title: "Critical Moments",
-          url: "#",
-          icon: Target,
-          isActive: true,
-        },
-        {
-          title: "Opening Analysis",
-          url: "#",
-          icon: Play,
-        },
-        {
-          title: "Endgame Study",
-          url: "#",
-          icon: Trophy,
-        },
-      ],
-    },
-    {
       title: "Game Library",
       url: "#",
       icon: BookOpen,
@@ -151,7 +127,7 @@ export function ChessSidebar({
   onToggleVoice,
   children,
 }: ChessSidebarProps) {
-  const [openSections, setOpenSections] = React.useState<string[]>(["Game Analysis"])
+  const [openSections, setOpenSections] = React.useState<string[]>(["Game Library"])
 
   const toggleSection = (title: string) => {
     setOpenSections(prev => 
@@ -240,74 +216,6 @@ export function ChessSidebar({
             ))}
           </SidebarMenu>
         </ScrollArea>
-
-        {/* Analysis Controls */}
-        {selectedGame && (
-          <div className="p-4 space-y-3 border-t">
-            <div className="space-y-2">
-              <h3 className="font-medium text-sm flex items-center gap-2">
-                <Zap className="size-4" />
-                Analysis Status
-              </h3>
-              
-              {criticalMoments.length > 0 ? (
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p>✓ {criticalMoments.length} critical moments found</p>
-                  <p>Voice analysis: {voiceEnabled ? 'Enabled' : 'Disabled'}</p>
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Use the main controls above to start analysis
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Critical Moments Navigation */}
-        {criticalMoments.length > 0 && (
-          <div className="p-4 space-y-3 border-t">
-            <h3 className="font-medium text-sm flex items-center gap-2">
-              <Eye className="size-4" />
-              Critical Moments
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {criticalMoments.slice(0, 4).map((moment, index) => (
-                <Button
-                  key={index}
-                  onClick={() => onMomentChange?.(index + 1)}
-                  variant={currentMoment === index + 1 ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs h-8"
-                >
-                  Moment {index + 1}
-                </Button>
-              ))}
-            </div>
-            
-            {/* Moment Navigation Controls */}
-            <div className="flex justify-center gap-1">
-              <Button
-                onClick={() => onMomentChange?.(Math.max(1, currentMoment - 1))}
-                disabled={currentMoment <= 1}
-                variant="outline"
-                size="sm"
-                className="px-2"
-              >
-                <SkipBack className="size-3" />
-              </Button>
-              <Button
-                onClick={() => onMomentChange?.(Math.min(criticalMoments.length, currentMoment + 1))}
-                disabled={currentMoment >= criticalMoments.length}
-                variant="outline"
-                size="sm"
-                className="px-2"
-              >
-                <SkipForward className="size-3" />
-              </Button>
-            </div>
-          </div>
-        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t p-4">

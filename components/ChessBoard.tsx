@@ -191,7 +191,11 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   return (
     <div className="chess-board-container">
       {/* Player name - Black (top) */}
-      <div className="player-name black-player">{currentBlackPlayer}</div>
+      <div className="player-name black-player">
+        <span className="piece-icon">♛</span>
+        <span className="player-name-text">{currentBlackPlayer}</span>
+        <span className="player-color-indicator">Black</span>
+      </div>
       
       {/* Chess Board */}
       <div className="chess-board">
@@ -200,12 +204,23 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
           position={currentPosition}
           customSquareStyles={customSquareStyles}
           areArrowsAllowed={true}
+          arePiecesDraggable={false}
           boardOrientation={boardOrientation}
+          animationDuration={200}
+          showBoardNotation={true}
+          customBoardStyle={{
+            borderRadius: '4px',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
+          }}
         />
       </div>
       
       {/* Player name - White (bottom) */}
-      <div className="player-name white-player">{currentWhitePlayer}</div>
+      <div className="player-name white-player">
+        <span className="piece-icon">♕</span>
+        <span className="player-name-text">{currentWhitePlayer}</span>
+        <span className="player-color-indicator">White</span>
+      </div>
       
       {/* Controls */}
       <div className="controls-row">
@@ -316,29 +331,59 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
         }
 
         .player-name {
-          text-align: center;
-          padding: 6px 12px;
-          font-weight: bold;
-          font-size: 1em;
-          color: #222;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-          background-color: #f0f0f0;
-          border-radius: 4px;
-          margin: 0 auto 6px auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 8px 16px;
+          font-weight: 600;
+          font-size: 0.95em;
+          border-radius: 8px;
+          margin: 0 auto 8px auto;
           width: fit-content;
-          min-width: 120px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-          border: 1px solid #e0e0e0;
+          min-width: 200px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+          border: 2px solid transparent;
+          transition: all 0.2s ease;
         }
 
         .black-player {
-          margin-bottom: 6px;
+          background: linear-gradient(135deg, #2c2c2c, #1a1a1a);
+          color: #ffffff;
+          border-color: #444;
+          margin-bottom: 8px;
         }
 
         .white-player {
-          margin-top: 6px;
-          margin-bottom: 8px;
+          background: linear-gradient(135deg, #ffffff, #f8f9fa);
+          color: #1a1a1a;
+          border-color: #e9ecef;
+          margin-top: 8px;
+          margin-bottom: 12px;
+        }
+
+        .piece-icon {
+          font-size: 1.2em;
+          font-weight: bold;
+        }
+
+        .player-name-text {
+          font-weight: 600;
+          flex: 1;
+          text-align: center;
+        }
+
+        .player-color-indicator {
+          font-size: 0.75em;
+          font-weight: 500;
+          opacity: 0.8;
+          padding: 2px 6px;
+          border-radius: 4px;
+          background-color: rgba(255,255,255,0.1);
+        }
+
+        .white-player .player-color-indicator {
+          background-color: rgba(0,0,0,0.1);
         }
 
         .controls-row {
@@ -553,8 +598,9 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
 
         .castle-move {
           font-weight: bold;
-          background: linear-gradient(45deg, #e3f2fd, #bbdefb);
-          border: 1px solid #2196F3;
+          background: linear-gradient(45deg, #f3e5f5, #e1bee7);
+          border: 1px solid #9c27b0;
+          color: #4a148c;
         }
 
         .no-moves {
@@ -639,8 +685,9 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
 
         .castle-move-example {
           font-weight: bold;
-          background: linear-gradient(45deg, #e3f2fd, #bbdefb);
-          border: 1px solid #2196F3;
+          background: linear-gradient(45deg, #f3e5f5, #e1bee7);
+          border: 1px solid #9c27b0;
+          color: #4a148c;
         }
 
         .move-history-grid::-webkit-scrollbar {

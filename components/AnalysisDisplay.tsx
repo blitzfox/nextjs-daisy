@@ -18,6 +18,61 @@ interface AnalysisDisplayProps {
   isAnalyzing: boolean;
 }
 
+// Custom components for ReactMarkdown to style chess moves
+const components = {
+  code: ({ node, inline, className, children, ...props }: any) => {
+    // Check if this looks like chess notation
+    const content = String(children).replace(/\n$/, '');
+    
+    // Add some logging to debug what we're receiving
+    console.log('Code component checking:', content, 'inline:', inline);
+    
+    // Comprehensive chess notation patterns
+    const isChessMove = (
+      // Standard piece moves: Nf3, Be3, Qd4, etc.
+      /^[KQRBN][a-h][1-8][\+\#]?$/.test(content) ||
+      // Pawn moves: e4, a6, h5, etc.
+      /^[a-h][1-8][\+\#]?$/.test(content) ||
+      // Captures: Nxf7, exd5, Bxc6, etc.
+      /^[KQRBN]?[a-h]?x[a-h][1-8][\+\#]?$/.test(content) ||
+      // Castling: O-O, O-O-O
+      /^O-O(-O)?[\+\#]?$/.test(content) ||
+      // Move numbers with moves: 5. c3, 10... Bg7
+      /^\d+\.{1,3}\s*([KQRBN]?[a-h]?[1-8]?[x]?[a-h][1-8]|O-O(-O)?)[\+\#]?$/.test(content) ||
+      // UCI notation: e2e4, g1f3
+      /^[a-h][1-8][a-h][1-8]$/.test(content) ||
+      // Pawn promotion: a8=Q, h1=N
+      /^[a-h][18]=[QRBN][\+\#]?$/.test(content) ||
+      // Pawn pushes like d4-d5
+      /^[a-h][1-8]-[a-h][1-8]$/.test(content)
+    );
+    
+    if (inline && isChessMove) {
+      console.log('✅ Applying amber styling to chess move:', content);
+      return (
+        <code
+          className="bg-amber-50 border border-amber-200 px-2 py-1 rounded-md shadow-sm font-mono text-amber-800 font-semibold"
+          {...props}
+        >
+          {children}
+        </code>
+      );
+    }
+    
+    // Default code styling
+    return (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    );
+  },
+};
+
+// Since the AI should already be adding backticks, we don't need complex preprocessing
+const preprocessChessNotation = (text: string): string => {
+  return text; // Pass through unchanged since AI should handle backticks
+};
+
 const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
   currentMoment,
   criticalMoments,
@@ -124,36 +179,50 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onMomentChange(currentMoment - 1)}
-                disabled={currentMoment <= 1}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
-              </Button>
-              
-              <div className="text-center">
-                <CardTitle className="text-lg">
-                  Critical Moment {currentMoment} of {criticalMoments.length}
-                </CardTitle>
-                <CardDescription>{parsedMoment.title}</CardDescription>
-              </div>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onMomentChange(currentMoment + 1)}
-                disabled={currentMoment >= criticalMoments.length}
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onMomentChange(currentMoment - 1)}
+              disabled={currentMoment <= 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            
+            <div className="text-center flex-1">
+              <CardTitle className="text-lg">
+                Critical Moment {currentMoment} of {criticalMoments.length}
+              </CardTitle>
             </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onMomentChange(currentMoment + 1)}
+              disabled={currentMoment >= criticalMoments.length}
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
           </div>
         </CardHeader>
+      </Card>
+
+      {/* AI Generated Insight - Moved to top for cleaner title area */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+              <Target className="h-3 w-3 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs font-medium text-blue-900 mb-1">AI Analysis</div>
+              <div className="text-sm text-blue-800 leading-relaxed">
+                {currentMomentData.reason}
+              </div>
+            </div>
+          </div>
+        </CardContent>
       </Card>
 
       {/* Moment Tabs */}
@@ -180,28 +249,24 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                     {getPhaseIcon(currentMomentData.phase)} {currentMomentData.phase}
                   </Badge>
                   <Badge className={getEvaluationColor(currentMomentData.evaluation)}>
-                    {currentMomentData.evaluation}
+                    Eval: {currentMomentData.evaluation}
                   </Badge>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <div className="text-muted-foreground">Move Number</div>
-                  <div className="font-medium">{currentMomentData.moveNumber}</div>
-                </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <div className="text-muted-foreground">Best Move</div>
-                  <div className="font-medium font-mono">{currentMomentData.bestMove}</div>
+                  <div className="font-medium font-mono bg-gray-50 px-2 py-1 rounded shadow-sm border">
+                    {currentMomentData.moveNumber} {currentMomentData.bestMove}
+                  </div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">Opponent&apos;s Best</div>
-                  <div className="font-medium font-mono">{currentMomentData.opponentsBestMove}</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Game Phase</div>
-                  <div className="font-medium">{currentMomentData.phase}</div>
+                  <div className="text-muted-foreground">Best Response</div>
+                  <div className="font-medium font-mono bg-gray-50 px-2 py-1 rounded shadow-sm border">
+                    {currentMomentData.moveNumber.includes('.') ? currentMomentData.moveNumber.replace('.', '...') : currentMomentData.moveNumber + '...'} {currentMomentData.opponentsBestMove}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -224,8 +289,8 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                     WHAT HAPPENED
                   </h4>
                   <div className="prose prose-sm max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {parsedMoment.explanation}
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+                      {preprocessChessNotation(parsedMoment.explanation)}
                     </ReactMarkdown>
                   </div>
                 </div>
@@ -241,9 +306,9 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                     RECOMMENDED MOVE
                   </h4>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <code className="text-lg font-mono text-blue-800 font-semibold">
-                      {parsedMoment.recommendation}
-                    </code>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+                      {`\`${parsedMoment.recommendation}\``}
+                    </ReactMarkdown>
                   </div>
                 </div>
               )}
@@ -255,8 +320,8 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                     WHY IT&apos;S BETTER
                   </h4>
                   <div className="prose prose-sm max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {parsedMoment.whyBetter}
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+                      {preprocessChessNotation(parsedMoment.whyBetter)}
                     </ReactMarkdown>
                   </div>
                 </div>
@@ -273,8 +338,8 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                   </h4>
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                     <div className="prose prose-sm max-w-none text-amber-800">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {parsedMoment.principle}
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+                        {preprocessChessNotation(parsedMoment.principle)}
                       </ReactMarkdown>
                     </div>
                   </div>
@@ -284,20 +349,11 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
               {/* Full Analysis Fallback */}
               {!parsedMoment.explanation && !parsedMoment.recommendation && (
                 <div className="prose prose-sm max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {parsedMoment.fullContent || currentMomentData.analysis}
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+                    {preprocessChessNotation(parsedMoment.fullContent || currentMomentData.analysis)}
                   </ReactMarkdown>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Summary Card */}
-          <Card className="bg-gradient-to-r from-slate-50 to-slate-100">
-            <CardContent className="pt-6">
-              <div className="text-sm text-muted-foreground">
-                <strong>Summary:</strong> {currentMomentData.reason}
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -18,14 +18,12 @@ const PlatformSelector: React.FC = () => {
     {
       id: 'lichess' as Platform,
       name: 'Lichess',
-      description: 'Free & Open Source',
       color: 'from-green-500 to-emerald-600',
       icon: <Globe className="h-4 w-4" />
     },
     {
       id: 'chessdotcom' as Platform,
       name: 'Chess.com',
-      description: 'World\'s #1 Chess Site',
       color: 'from-orange-500 to-red-600',
       icon: <Zap className="h-4 w-4" />
     }
@@ -67,9 +65,6 @@ const PlatformSelector: React.FC = () => {
                   <div>
                     <div className={`font-semibold text-sm ${isSelected ? 'text-white' : 'text-gray-800'}`}>
                       {platformOption.name}
-                    </div>
-                    <div className={`text-xs ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>
-                      {platformOption.description}
                     </div>
                   </div>
                 </div>

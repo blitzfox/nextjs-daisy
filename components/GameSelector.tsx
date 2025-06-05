@@ -91,14 +91,8 @@ const GameSelector: React.FC<GameSelectorProps> = ({ games }) => {
     <div className="space-y-4">
       {/* Games Table */}
       <Card className="shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-amber-500" />
-            Recent Games ({games.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0 px-3 pb-3">
-          <div className="rounded-md border overflow-hidden">
+        <CardContent className="pt-4 px-3 pb-3">
+          <div className="rounded-md overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent bg-gray-50">

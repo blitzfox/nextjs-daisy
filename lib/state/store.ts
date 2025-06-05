@@ -2,6 +2,41 @@ import { create } from 'zustand';
 import { fetchLichessGames, fetchChessDotComGames } from '@/lib/api-clients/games';
 import { Game, CriticalMoment, Platform } from '@/lib/types';
 
+// Helper function to count moves from PGN
+const countMovesFromPGN = (pgn: string): number => {
+  if (!pgn) return 0;
+  
+  try {
+    // Remove PGN headers (lines starting with [)
+    const gameText = pgn.split('\n')
+      .filter(line => !line.trim().startsWith('['))
+      .join(' ')
+      .trim();
+    
+    // Remove game result (1-0, 0-1, 1/2-1/2, *)
+    const cleanText = gameText.replace(/\s*(1-0|0-1|1\/2-1\/2|\*)\s*$/, '');
+    
+    // Split by spaces and filter out move numbers, comments, and empty strings
+    const tokens = cleanText.split(/\s+/)
+      .filter(token => {
+        // Skip empty tokens
+        if (!token) return false;
+        // Skip move numbers (e.g., "1.", "2.", etc.)
+        if (/^\d+\.+$/.test(token)) return false;
+        // Skip comments in curly braces
+        if (token.startsWith('{') || token.endsWith('}')) return false;
+        // Skip variations in parentheses
+        if (token.startsWith('(') || token.endsWith(')')) return false;
+        return true;
+      });
+    
+    return tokens.length;
+  } catch (error) {
+    console.error('Error counting moves from PGN:', error);
+    return 0;
+  }
+};
+
 interface ChessState {
   // User info
   username: string;
@@ -101,10 +136,11 @@ export const useChessStore = create<ChessState>((set, get) => ({
   },
   
   selectGame: (game) => {
+    const finalPosition = countMovesFromPGN(game.pgn);
     set({ 
       selectedGame: game,
       currentGameMoves: game.moves,
-      startingPosition: 0,
+      startingPosition: finalPosition,
       criticalMoments: [],
       circles: {},
       audioClips: [],
