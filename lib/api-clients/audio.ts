@@ -4,8 +4,8 @@ import { AudioRequest, AudioResponse } from '@/lib/types';
 // Function to generate audio from text using ElevenLabs API
 export async function generateAudio(text: string, voiceId?: string): Promise<AudioResponse> {
   try {
-    // Use default voice if not specified
-    const voice = voiceId || 'g1YTxkimRsWs5W4bseRi'; // Default ElevenLabs voice ID
+    // Use Shimmer voice ID to match Python implementation
+    const voice = voiceId || 'kCx3Qoh3lfILbbTZftSq'; // Shimmer voice ID
     
     const response = await axios.post('/api/audio/generate', {
       text,

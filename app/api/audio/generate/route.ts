@@ -21,10 +21,10 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Use default voice if not specified
-    const voiceId = body.voiceId || 'g1YTxkimRsWs5W4bseRi';
+    // Use Shimmer voice ID to match Python implementation
+    const voiceId = body.voiceId || 'kCx3Qoh3lfILbbTZftSq';
     
-    // Call ElevenLabs API
+    // Call ElevenLabs API with parameters matching Python implementation
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
       {
@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           text: body.text,
-          model_id: 'eleven_monolingual_v1',
+          model_id: 'eleven_flash_v2',  // Updated to match Python
+          output_format: 'mp3_44100_128',  // Added to match Python
           voice_settings: {
             stability: 0.75,
             similarity_boost: 0.75,
