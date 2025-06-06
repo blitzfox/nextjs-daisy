@@ -1,13 +1,13 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { AppLayout } from '@/components/app-layout';
+import { AuthProvider } from '@/lib/auth/context';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Grandmaster AI Agent',
-  description: 'AI Chess Coach - Analyze your chess games with AI',
+  title: 'ChessCoach - AI Chess Analysis',
+  description: 'Improve your chess with AI-powered game analysis and insights',
 };
 
 export default function RootLayout({
@@ -18,9 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AppLayout>
+        <AuthProvider>
           {children}
-        </AppLayout>
+        </AuthProvider>
       </body>
     </html>
   );
