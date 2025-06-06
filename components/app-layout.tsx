@@ -67,8 +67,22 @@ export function AppLayout({ children }: AppLayoutProps) {
           {/* Top bar with trigger */}
           <header className="flex h-14 items-center border-b px-4 lg:px-6">
             <SidebarTrigger className="mr-4" />
-            <div className="flex-1">
+            <div className="flex-1 flex items-center justify-between">
               <h1 className="text-lg font-semibold">Chess Analysis</h1>
+              <nav className="flex items-center gap-4">
+                <a 
+                  href="/" 
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                >
+                  Analysis
+                </a>
+                <a 
+                  href="/commentary" 
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                >
+                  Commentary
+                </a>
+              </nav>
             </div>
           </header>
           

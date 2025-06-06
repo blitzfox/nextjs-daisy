@@ -111,3 +111,57 @@ export interface AudioResponse {
   audioUrl: string;
   error?: string;
 }
+
+// Commentary types
+export type CommentaryLevel = 'beginner' | 'intermediate';
+
+export interface MoveCommentary {
+  moveNumber: string;
+  movePlayed: string;
+  fen: string;
+  commentary: string;
+  keyIdeas: string[];
+  momentumShift?: 'white' | 'black' | 'neutral';
+  isHighlight: boolean;
+}
+
+export interface GameSummary {
+  type: 'game' | 'progressive';
+  moveNumber?: string; // For progressive summaries
+  title: string;
+  content: string;
+  tournamentContext?: string;
+  keyMoments: number[]; // References to move numbers
+}
+
+export interface AICommentary {
+  gameId: string;
+  level: CommentaryLevel;
+  gameSummary: GameSummary;
+  progressiveSummaries: GameSummary[];
+  moveCommentary: MoveCommentary[];
+  keyHighlights: {
+    moveNumber: string;
+    title: string;
+    description: string;
+  }[];
+}
+
+// Commentary API types
+export interface CommentaryRequest {
+  pgn: string;
+  level: CommentaryLevel;
+  gameInfo: {
+    white: string;
+    black: string;
+    result: string;
+    date: string;
+    tournament?: string;
+    round?: string;
+  };
+}
+
+export interface CommentaryResponse {
+  commentary: AICommentary;
+  error?: string;
+}
