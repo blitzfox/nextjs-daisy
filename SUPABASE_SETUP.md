@@ -1,6 +1,6 @@
-# Supabase Authentication Setup Guide
+# 🔐 Supabase Authentication Setup
 
-This guide will help you set up Supabase authentication with magic links for your ChessCoach application.
+This guide will help you set up Supabase authentication with magic links for your AI Chess Coach application.
 
 ## 1. Create a Supabase Project
 
@@ -8,7 +8,7 @@ This guide will help you set up Supabase authentication with magic links for you
 2. Click "New Project"
 3. Choose your organization
 4. Enter project details:
-   - **Name**: ChessCoach (or your preferred name)
+   - **Name**: AI Chess Coach (or your preferred name)
    - **Database Password**: Generate a secure password
    - **Region**: Choose the closest region to your users
 5. Click "Create new project"

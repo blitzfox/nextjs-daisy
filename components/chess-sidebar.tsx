@@ -1,32 +1,18 @@
 'use client'
 
 import * as React from "react"
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth/context'
 import {
-  BookOpen,
-  Bot,
-  Command,
-  LifeBuoy,
-  Send,
-  Settings2,
-  SquareTerminal,
-  Triangle,
-  Users2,
-  ChevronUp,
-  Play,
-  Pause,
-  SkipForward,
-  SkipBack,
-  Volume2,
-  VolumeX,
-  Eye,
   Target,
-  Trophy,
-  Clock,
-  Activity,
-  Gamepad2,
-  Zap,
-  ChevronDown,
-  ChevronRight,
+  User,
+  LogOut,
+  Sparkles,
+  BarChart3,
+  Mic,
+  MicOff,
+  Home,
+  UserCircle,
 } from "lucide-react"
 
 import {
@@ -37,66 +23,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-
-// This is sample data.
-const data = {
-  navMain: [
-    {
-      title: "Game Library",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Recent Games",
-          url: "#",
-          icon: Clock,
-        },
-        {
-          title: "Favorites",
-          url: "#",
-          icon: Trophy,
-        },
-        {
-          title: "Import PGN",
-          url: "#",
-          icon: Send,
-        },
-      ],
-    },
-    {
-      title: "AI Coach",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Analysis Settings",
-          url: "#",
-          icon: Settings2,
-        },
-        {
-          title: "Voice Settings",
-          url: "#",
-          icon: Volume2,
-        },
-      ],
-    },
-  ],
-}
 
 interface ChessSidebarProps {
   username?: string
@@ -127,38 +58,39 @@ export function ChessSidebar({
   onToggleVoice,
   children,
 }: ChessSidebarProps) {
-  const [openSections, setOpenSections] = React.useState<string[]>(["Game Library"])
+  const router = useRouter()
+  const { user, signOut } = useAuth()
 
-  const toggleSection = (title: string) => {
-    setOpenSections(prev => 
-      prev.includes(title) 
-        ? prev.filter(t => t !== title)
-        : [...prev, title]
-    )
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/auth/login')
   }
 
   return (
-    <Sidebar className="border-r-0">
-      <SidebarHeader className="gap-3 border-b p-4">
-        <div className="flex items-center gap-2">
+    <Sidebar className="border-r">
+      <SidebarHeader className="border-b px-4 py-3">
+        <div className="flex items-center gap-3">
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Command className="size-4" />
+            <Sparkles className="size-4" />
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-semibold">Grandmaster AI</span>
-            <span className="truncate text-xs text-muted-foreground">Chess Coach</span>
+            <span className="truncate font-semibold">AI Chess Coach</span>
+            <span className="truncate text-xs text-muted-foreground">Grandmaster Analysis</span>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-2">
         {/* User & Platform Info */}
         {username && (
-          <div className="p-4 space-y-2">
-            <Card>
+          <div className="py-2">
+            <Card className="mx-2">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center justify-between">
-                  <span>Player Profile</span>
+                  <span className="flex items-center gap-2">
+                    <User className="size-3" />
+                    Player Profile
+                  </span>
                   <Badge variant="secondary" className="text-xs">
                     {platform}
                   </Badge>
@@ -174,65 +106,114 @@ export function ChessSidebar({
           </div>
         )}
 
-        <ScrollArea className="flex-1">
-          <SidebarMenu className="px-2">
-            {data.navMain.map((item) => (
-              <Collapsible
-                key={item.title}
-                open={openSections.includes(item.title)}
-                onOpenChange={() => toggleSection(item.title)}
-                className="group/collapsible"
+        {/* Critical Moments Navigation */}
+        {criticalMoments.length > 0 && (
+          <div className="py-2">
+            <Card className="mx-2">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Target className="size-3" />
+                  Critical Moments
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-3 space-y-2">
+                <div className="flex flex-wrap gap-1">
+                  {criticalMoments.map((_, index) => (
+                    <Button
+                      key={index + 1}
+                      size="sm"
+                      variant={currentMoment === index + 1 ? "default" : "outline"}
+                      className="h-6 w-6 p-0 text-xs"
+                      onClick={() => onMomentChange?.(index + 1)}
+                    >
+                      {index + 1}
+                    </Button>
+                  ))}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Moment {currentMoment} of {criticalMoments.length}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Navigation Menu */}
+        <div className="flex-1 py-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => router.push('/')}>
+                <Home className="size-4" />
+                <span>Game Analysis</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => onAnalyze?.()}
+                disabled={!selectedGame}
+                className={!selectedGame ? "opacity-50 cursor-not-allowed" : ""}
               >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip={item.title} className="w-full justify-between">
-                      <div className="flex items-center gap-2">
-                        <item.icon className="size-4" />
-                        <span>{item.title}</span>
-                      </div>
-                      {openSections.includes(item.title) ? (
-                        <ChevronDown className="size-4" />
-                      ) : (
-                        <ChevronRight className="size-4" />
-                      )}
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {item.items?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild>
-                            <button className="flex items-center gap-2 w-full">
-                              <subItem.icon className="size-3" />
-                              <span>{subItem.title}</span>
-                            </button>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-            ))}
+                <Target className="size-4" />
+                <span>Critical Moments</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => onToggleVoice?.()}>
+                {voiceEnabled ? <Mic className="size-4" /> : <MicOff className="size-4" />}
+                <span>Voice Analysis</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => router.push('/dashboard')}>
+                <UserCircle className="size-4" />
+                <span>Profile</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
-        </ScrollArea>
+        </div>
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <Users2 className="size-4" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Support</span>
-                <span className="truncate text-xs">Help & Feedback</span>
-              </div>
-              <ChevronUp className="ml-auto size-4" />
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarFooter className="border-t p-3">
+        <div className="space-y-2">
+          {/* User Info */}
+          <div className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-muted/50">
+            <div className="flex aspect-square size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <User className="size-3" />
+            </div>
+            <div className="grid flex-1 text-left text-xs leading-tight">
+              <span className="truncate font-medium">
+                {user?.email?.split('@')[0] || 'User'}
+              </span>
+              <span className="truncate text-muted-foreground">
+                {user?.email || 'Not signed in'}
+              </span>
+            </div>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1 justify-start gap-2 h-8"
+              onClick={() => router.push('/dashboard')}
+            >
+              <BarChart3 className="size-3" />
+              Dashboard
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2"
+              onClick={handleSignOut}
+            >
+              <LogOut className="size-3" />
+            </Button>
+          </div>
+        </div>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

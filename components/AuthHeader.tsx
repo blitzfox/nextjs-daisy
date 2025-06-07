@@ -24,7 +24,7 @@ export default function AuthHeader() {
               <div className="p-1.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">ChessCoach</span>
+              <span className="text-xl font-bold text-gray-900">AI Chess Coach</span>
             </Link>
             <div className="animate-pulse">
               <div className="h-8 w-20 bg-gray-200 rounded"></div>
@@ -44,7 +44,7 @@ export default function AuthHeader() {
             <div className="p-1.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
               <Sparkles className="h-6 w-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">ChessCoach</span>
+            <span className="text-xl font-bold text-gray-900">AI Chess Coach</span>
           </Link>
 
           {/* Navigation */}

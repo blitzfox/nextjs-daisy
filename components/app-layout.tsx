@@ -3,7 +3,6 @@
 import * as React from "react"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { ChessSidebar } from "@/components/chess-sidebar"
-import AuthHeader from "@/components/AuthHeader"
 import { useChessStore } from '@/lib/state/store'
 
 interface AppLayoutProps {
@@ -50,9 +49,8 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AuthHeader />
       <SidebarProvider>
-        <div className="flex h-[calc(100vh-4rem)] w-full">
+        <div className="flex h-screen w-full">
           <ChessSidebar
             username={username}
             platform={platform}
@@ -67,16 +65,16 @@ export function AppLayout({ children }: AppLayoutProps) {
             onToggleVoice={handleToggleVoice}
           />
           <main className="flex-1 flex flex-col overflow-hidden">
-            {/* Top bar with trigger */}
-            <header className="flex h-14 items-center border-b px-4 lg:px-6 bg-white">
+            {/* Minimal top bar with just the trigger */}
+            <header className="flex h-12 items-center border-b px-4 bg-white/80 backdrop-blur-sm">
               <SidebarTrigger className="mr-4" />
               <div className="flex-1">
-                <h1 className="text-lg font-semibold">Chess Analysis</h1>
+                <h1 className="text-lg font-semibold text-gray-800">AI Chess Coach</h1>
               </div>
             </header>
             
             {/* Main content area */}
-            <div className="flex-1 overflow-auto p-4 lg:p-6">
+            <div className="flex-1 overflow-auto">
               {children}
             </div>
           </main>

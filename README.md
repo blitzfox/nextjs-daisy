@@ -1,6 +1,6 @@
-# Chess Analysis App with Next.js
+# AI Chess Coach - Next.js Chess Analysis App
 
-This is a Next.js application for analyzing chess games from Lichess and Chess.com. The app allows users to input their username, fetch their recent games, select a game for analysis, and receive AI-powered insights about critical moments in the game.
+This is a Next.js application for analyzing chess games from Lichess and Chess.com. AI Chess Coach allows users to input their username, fetch their recent games, select a game for analysis, and receive AI-powered insights about critical moments in the game.
 
 ## Features
 
@@ -35,8 +35,8 @@ This is a Next.js application for analyzing chess games from Lichess and Chess.c
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/nextjs-chess-app.git
-   cd nextjs-chess-app
+   git clone https://github.com/yourusername/ai-chess-coach.git
+   cd ai-chess-coach
    ```
 
 2. Install dependencies:

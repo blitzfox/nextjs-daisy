@@ -9,6 +9,7 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   signInWithEmail: (email: string) => Promise<{ error: any }>
+  signUpWithEmail: (email: string) => Promise<{ error: any }>
   signOut: () => Promise<{ error: any }>
 }
 
@@ -44,14 +45,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase.auth])
 
   const signInWithEmail = async (email: string) => {
+    // For sign in, try with shouldCreateUser: false first
+    // If user doesn't exist, we'll get a "Signups not allowed for otp" error
     const { data, error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
-        shouldCreateUser: true, // Allow automatic user creation
+        shouldCreateUser: false, // Don't create new users on sign in
       },
     })
+    
+    // If we get the "signups not allowed" error, it means user doesn't exist
+    if (error && error.message.toLowerCase().includes('signups not allowed')) {
+      return { error: { message: 'No account found with this email address. Please sign up first.' } }
+    }
+    
     return { error }
+  }
+
+  const signUpWithEmail = async (email: string) => {
+    // For sign up, we'll use a different approach
+    // First try to sign in with shouldCreateUser: false to check if user exists
+    const { error: checkError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        shouldCreateUser: false,
+      },
+    })
+    
+    // If no error, user already exists
+    if (!checkError) {
+      return { error: { message: 'An account with this email already exists. Please sign in instead.' } }
+    }
+    
+    // If we get "signups not allowed" error, user doesn't exist - proceed with signup
+    if (checkError && checkError.message.toLowerCase().includes('signups not allowed')) {
+      // Now send the actual signup magic link
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          shouldCreateUser: true, // Allow creation for new users
+        },
+      })
+      return { error }
+    }
+    
+    // Some other error occurred
+    return { error: checkError }
   }
 
   const signOut = async () => {
@@ -64,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     loading,
     signInWithEmail,
+    signUpWithEmail,
     signOut,
   }
 
