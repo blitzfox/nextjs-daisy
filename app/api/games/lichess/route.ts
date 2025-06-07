@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const username = searchParams.get('username');
-    const maxGames = searchParams.get('maxGames') ? parseInt(searchParams.get('maxGames') as string, 10) : 40;
+    const maxGames = searchParams.get('maxGames') ? parseInt(searchParams.get('maxGames') as string, 10) : 50;
     
     if (!username) {
       return NextResponse.json(

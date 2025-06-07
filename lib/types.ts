@@ -64,6 +64,7 @@ export interface LichessGame {
     };
   };
   winner?: 'white' | 'black';
+  moves: string;
   pgn: string;
   opening?: {
     name: string;

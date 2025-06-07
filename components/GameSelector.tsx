@@ -23,7 +23,7 @@ interface GameSelectorProps {
 
 const GameSelector: React.FC<GameSelectorProps> = ({ games }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const gamesPerPage = 8;
+  const gamesPerPage = 5;
   const { selectGame, selectedGame } = useChessStore();
   
   // Calculate pagination
@@ -91,15 +91,15 @@ const GameSelector: React.FC<GameSelectorProps> = ({ games }) => {
     <div className="space-y-4">
       {/* Games Table */}
       <Card className="shadow-sm">
-        <CardContent className="pt-4 px-3 pb-3">
+        <CardContent className="pt-3 px-3 pb-2">
           <div className="rounded-md overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent bg-gray-50">
-                  <TableHead className="w-12 py-2 text-xs font-semibold">#</TableHead>
-                  <TableHead className="py-2 text-xs font-semibold">Players</TableHead>
-                  <TableHead className="text-center py-2 text-xs font-semibold w-20">Result</TableHead>
-                  <TableHead className="text-right py-2 text-xs font-semibold w-24">Date</TableHead>
+                  <TableHead className="w-12 py-1.5 text-xs font-semibold">#</TableHead>
+                  <TableHead className="py-1.5 text-xs font-semibold">Players</TableHead>
+                  <TableHead className="text-center py-1.5 text-xs font-semibold w-20">Result</TableHead>
+                  <TableHead className="text-right py-1.5 text-xs font-semibold w-24">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -117,13 +117,13 @@ const GameSelector: React.FC<GameSelectorProps> = ({ games }) => {
                           : ''
                       }`}
                     >
-                      <TableCell className="font-mono text-xs text-gray-500 py-2">
+                      <TableCell className="font-mono text-xs text-gray-500 py-1.5">
                         {gameNumber}
                       </TableCell>
-                      <TableCell className="py-2">
+                      <TableCell className="py-1.5">
                         <div className="flex items-center justify-between space-x-2 min-w-0">
                           <div className="flex items-center space-x-1 min-w-0 flex-1">
-                            <Avatar className="h-6 w-6 flex-shrink-0">
+                            <Avatar className="h-5 w-5 flex-shrink-0">
                               <AvatarFallback className="text-xs bg-white border text-gray-700">
                                 {getInitials(game.white)}
                               </AvatarFallback>
@@ -132,7 +132,7 @@ const GameSelector: React.FC<GameSelectorProps> = ({ games }) => {
                           </div>
                           <span className="text-gray-400 text-xs font-bold flex-shrink-0">vs</span>
                           <div className="flex items-center space-x-1 min-w-0 flex-1">
-                            <Avatar className="h-6 w-6 flex-shrink-0">
+                            <Avatar className="h-5 w-5 flex-shrink-0">
                               <AvatarFallback className="text-xs bg-gray-900 text-white">
                                 {getInitials(game.black)}
                               </AvatarFallback>
@@ -141,7 +141,7 @@ const GameSelector: React.FC<GameSelectorProps> = ({ games }) => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center py-2">
+                      <TableCell className="text-center py-1.5">
                         <div className="flex justify-center">
                           {getResultBadge(
                             game.result, 
@@ -151,7 +151,7 @@ const GameSelector: React.FC<GameSelectorProps> = ({ games }) => {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right py-2">
+                      <TableCell className="text-right py-1.5">
                         <div className="flex items-center justify-end space-x-1">
                           <Calendar className="h-3 w-3 text-gray-400 flex-shrink-0" />
                           <span className="text-xs text-gray-600 truncate">

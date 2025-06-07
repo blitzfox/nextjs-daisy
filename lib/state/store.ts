@@ -139,7 +139,7 @@ export const useChessStore = create<ChessState>((set, get) => ({
     const finalPosition = countMovesFromPGN(game.pgn);
     set({ 
       selectedGame: game,
-      currentGameMoves: game.moves,
+      currentGameMoves: game.pgn,
       startingPosition: finalPosition,
       criticalMoments: [],
       circles: {},

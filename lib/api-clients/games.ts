@@ -1,16 +1,35 @@
 import axios from 'axios';
 import { Game, LichessGame, ChessDotComGame, Platform } from '@/lib/types';
 
+// Create optimized axios instance with timeout
+const apiClient = axios.create({
+  timeout: 10000, // 10 second timeout
+  headers: {
+    'User-Agent': 'Chess-Analysis-App/1.0'
+  }
+});
+
+// Simple memory cache for recent API calls
+const gameCache = new Map<string, { data: Game[], timestamp: number }>();
+const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
+
 // Function to fetch games from Lichess API
-export async function fetchLichessGames(username: string, maxGames: number = 40): Promise<Game[]> {
+export async function fetchLichessGames(username: string, maxGames: number = 50): Promise<Game[]> {
+  // Check cache first
+  const cacheKey = `lichess-${username}-${maxGames}`;
+  const cached = gameCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log('Returning cached Lichess games');
+    return cached.data;
+  }
+
   try {
-    const response = await axios.get(
+    const response = await apiClient.get(
       `https://lichess.org/api/games/user/${username}`,
       {
         params: {
           max: maxGames,
-          pgnInJson: true,
-          opening: true,
+          // Removed pgnInJson and opening to reduce response size dramatically
           perfType: 'bullet,blitz,rapid,classical',
           ongoing: false,
         },
@@ -20,13 +39,22 @@ export async function fetchLichessGames(username: string, maxGames: number = 40)
       }
     );
     
-    // Lichess returns ndjson (newline delimited JSON)
-    const games = response.data
-      .split('\n')
-      .filter((line: string) => line.trim() !== '')
-      .map((line: string) => JSON.parse(line));
+    // Optimized NDJSON parsing
+    const lines = response.data.split('\n');
+    const games: LichessGame[] = [];
     
-    return games.map((game: LichessGame) => {
+    for (const line of lines) {
+      if (line.trim()) {
+        try {
+          games.push(JSON.parse(line));
+        } catch (e) {
+          console.warn('Failed to parse line:', line);
+        }
+      }
+    }
+    
+    // Process games and create minimal PGN from moves
+    const processedGames = games.map((game: LichessGame) => {
       const white = game.players.white.user?.name || 'Anonymous';
       const black = game.players.black.user?.name || 'Anonymous';
       
@@ -43,8 +71,8 @@ export async function fetchLichessGames(username: string, maxGames: number = 40)
       // Convert UTC timestamp to date string
       const date = new Date(game.createdAt).toISOString();
       
-      // Parse PGN to extract moves
-      const moves = extractMovesFromPgn(game.pgn);
+      // Create minimal PGN from moves (much faster than full PGN)
+      const minimalPgn = createMinimalPgn(game.moves || '', white, black, result, date, game.id);
       
       return {
         id: game.id,
@@ -52,30 +80,65 @@ export async function fetchLichessGames(username: string, maxGames: number = 40)
         black,
         result,
         date,
-        moves,
-        pgn: game.pgn,
+        moves: '', // Keep empty as before
+        pgn: minimalPgn,
         whiteRating: game.players.white.rating,
         blackRating: game.players.black.rating,
         timeControl: game.speed,
         opening: game.opening?.name,
       };
     });
+
+    // Cache the results
+    gameCache.set(cacheKey, { data: processedGames, timestamp: Date.now() });
+    
+    return processedGames;
   } catch (error) {
     console.error('Error fetching Lichess games:', error);
     throw new Error('Failed to fetch games from Lichess');
   }
 }
 
+// Helper function to create minimal PGN from moves
+function createMinimalPgn(moves: string, white: string, black: string, result: string, date: string, gameId: string): string {
+  if (!moves.trim()) return '';
+  
+  const dateFormatted = new Date(date).toISOString().split('T')[0];
+  
+  // Create minimal PGN headers
+  const headers = [
+    `[Event "Lichess Game"]`,
+    `[Site "https://lichess.org/${gameId}"]`,
+    `[Date "${dateFormatted}"]`,
+    `[White "${white}"]`,
+    `[Black "${black}"]`,
+    `[Result "${result}"]`,
+    '',
+    moves,
+    ''
+  ].join('\n');
+  
+  return headers;
+}
+
 // Function to fetch games from Chess.com API
-export async function fetchChessDotComGames(username: string, maxGames: number = 40): Promise<Game[]> {
+export async function fetchChessDotComGames(username: string, maxGames: number = 50): Promise<Game[]> {
+  // Check cache first
+  const cacheKey = `chessdotcom-${username}-${maxGames}`;
+  const cached = gameCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log('Returning cached Chess.com games');
+    return cached.data;
+  }
+
   try {
     // First, get the user's profile to check if username exists
-    const profileResponse = await axios.get(
+    const profileResponse = await apiClient.get(
       `https://api.chess.com/pub/player/${username}`
     );
     
     // Get the archives (months with games)
-    const archivesResponse = await axios.get(
+    const archivesResponse = await apiClient.get(
       `https://api.chess.com/pub/player/${username}/games/archives`
     );
     
@@ -94,7 +157,7 @@ export async function fetchChessDotComGames(username: string, maxGames: number =
     for (const archiveUrl of archives) {
       if (gamesCollected >= maxGames) break;
       
-      const archiveResponse = await axios.get(archiveUrl);
+      const archiveResponse = await apiClient.get(archiveUrl);
       const monthGames = archiveResponse.data.games || [];
       
       // Add games from this month
@@ -108,7 +171,7 @@ export async function fetchChessDotComGames(username: string, maxGames: number =
     }
     
     // Convert to our Game format
-    return allGames.map((game: ChessDotComGame) => {
+    const processedGames = allGames.map((game: ChessDotComGame) => {
       const white = game.white.username;
       const black = game.black.username;
       
@@ -125,9 +188,6 @@ export async function fetchChessDotComGames(username: string, maxGames: number =
       // Convert timestamp to date string
       const date = new Date(game.end_time * 1000).toISOString();
       
-      // Parse PGN to extract moves
-      const moves = extractMovesFromPgn(game.pgn);
-      
       // Generate a unique ID
       const id = game.url.split('/').pop() || `chessdotcom_${Date.now()}`;
       
@@ -137,39 +197,26 @@ export async function fetchChessDotComGames(username: string, maxGames: number =
         black,
         result,
         date,
-        moves,
+        moves: '', // Empty since components use pgn directly
         pgn: game.pgn,
         whiteRating: game.white.rating,
         blackRating: game.black.rating,
         timeControl: game.time_control,
       };
     });
+
+    // Cache the results
+    gameCache.set(cacheKey, { data: processedGames, timestamp: Date.now() });
+    
+    return processedGames;
   } catch (error) {
     console.error('Error fetching Chess.com games:', error);
     throw new Error('Failed to fetch games from Chess.com');
   }
 }
 
-// Helper function to extract moves from PGN
-function extractMovesFromPgn(pgn: string): string {
-  // Remove headers
-  const withoutHeaders = pgn.replace(/\[\s*.*?\s*".*?"\s*\]\s*\n?/g, '').trim();
-  
-  // Remove move numbers, annotations, and comments
-  const movesOnly = withoutHeaders
-    .replace(/\{[^}]*\}/g, '') // Remove comments in curly braces
-    .replace(/\([^)]*\)/g, '') // Remove variations in parentheses
-    .replace(/\d+\.\s*/g, '') // Remove move numbers
-    .replace(/\$\d+/g, '') // Remove NAG symbols
-    .replace(/[!?]+/g, '') // Remove evaluation symbols
-    .replace(/\s+/g, ' ') // Normalize whitespace
-    .trim();
-  
-  return movesOnly;
-}
-
 // Function to fetch games based on platform
-export async function fetchGamesByPlatform(username: string, platform: Platform, maxGames: number = 40): Promise<Game[]> {
+export async function fetchGamesByPlatform(username: string, platform: Platform, maxGames: number = 50): Promise<Game[]> {
   if (platform === 'lichess') {
     return fetchLichessGames(username, maxGames);
   } else {
