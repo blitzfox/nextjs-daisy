@@ -8,6 +8,7 @@ import GameSelector from '@/components/GameSelector';
 import ChessBoard from '@/components/ChessBoard';
 import AnalysisDisplay from '@/components/AnalysisDisplay';
 import AudioPlayer from '@/components/AudioPlayer';
+import SaveGameButton from '@/components/SaveGameButton';
 import { useChessStore } from '@/lib/state/store';
 import { analyzeCriticalMoments } from '@/lib/analysis/criticalMoments';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -338,6 +339,16 @@ export default function Home() {
                         </>
                       )}
                     </Button>
+
+                    {/* Save Game Button - only show after analysis */}
+                    {criticalMoments.length > 0 && (
+                      <SaveGameButton
+                        platform={platform}
+                        username={username}
+                        voiceEnabled={voiceEnabled}
+                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                      />
+                    )}
                   </div>
                 </div>
                 
