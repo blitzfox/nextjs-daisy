@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, ChevronRight, Target, TrendingUp, Lightbulb, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Target, TrendingUp, Lightbulb, BookOpen, FileText } from 'lucide-react';
 
 interface AnalysisDisplayProps {
   currentMoment: number;
@@ -24,34 +24,128 @@ const components = {
     // Check if this looks like chess notation
     const content = String(children).replace(/\n$/, '');
     
-    // Add some logging to debug what we're receiving
-    console.log('Code component checking:', content, 'inline:', inline);
+    // Add detailed logging to debug what we're receiving
+    console.log('🔍 Code component received:', {
+      content,
+      inline,
+      className,
+      length: content.length
+    });
     
-    // Comprehensive chess notation patterns
+    // Simplified and more comprehensive chess notation patterns
     const isChessMove = (
-      // Standard piece moves: Nf3, Be3, Qd4, etc.
+      // Standard piece moves: Nf3, Be3, Qd4, Bb5, etc.
       /^[KQRBN][a-h][1-8][\+\#]?$/.test(content) ||
-      // Pawn moves: e4, a6, h5, etc.
+      // Pawn moves: e4, a6, h5, c4, etc.
       /^[a-h][1-8][\+\#]?$/.test(content) ||
       // Captures: Nxf7, exd5, Bxc6, etc.
       /^[KQRBN]?[a-h]?x[a-h][1-8][\+\#]?$/.test(content) ||
       // Castling: O-O, O-O-O
       /^O-O(-O)?[\+\#]?$/.test(content) ||
-      // Move numbers with moves: 5. c3, 10... Bg7
-      /^\d+\.{1,3}\s*([KQRBN]?[a-h]?[1-8]?[x]?[a-h][1-8]|O-O(-O)?)[\+\#]?$/.test(content) ||
-      // UCI notation: e2e4, g1f3
-      /^[a-h][1-8][a-h][1-8]$/.test(content) ||
-      // Pawn promotion: a8=Q, h1=N
-      /^[a-h][18]=[QRBN][\+\#]?$/.test(content) ||
-      // Pawn pushes like d4-d5
-      /^[a-h][1-8]-[a-h][1-8]$/.test(content)
+      // Move numbers with pieces: 10. Bb5, 5. c3, etc.
+      /^\d+\.\s*[KQRBN][a-h][1-8][\+\#]?$/.test(content) ||
+      // Move numbers with pawns: 10. c4, 5. e4, etc.
+      /^\d+\.\s*[a-h][1-8][\+\#]?$/.test(content) ||
+      // Move numbers with captures: 10. Bxc6, etc.
+      /^\d+\.\s*[KQRBN]?[a-h]?x[a-h][1-8][\+\#]?$/.test(content) ||
+      // Black moves with dots: 10... Bg7, etc.
+      /^\d+\.\.\.\s*[KQRBN]?[a-h]?[1-8]?[x]?[a-h][1-8][\+\#]?$/.test(content)
     );
     
-    if (inline && isChessMove) {
+    // Check if this is a chess evaluation
+    const isEvaluation = /^[+\-]?\d*\.?\d+$/.test(content);
+    
+    // Add detailed evaluation logging
+    if (isEvaluation) {
+      const evalValue = parseFloat(content);
+      console.log('🎯 EVALUATION DETECTED:', {
+        content,
+        evalValue,
+        isPositive: evalValue > 0,
+        isNegative: evalValue < 0,
+        isNeutral: evalValue === 0,
+        inline: inline
+      });
+    }
+    
+    console.log('🎯 Chess move detection result:', {
+      content,
+      isChessMove,
+      isEvaluation,
+      patterns: {
+        piece: /^[KQRBN][a-h][1-8][\+\#]?$/.test(content),
+        pawn: /^[a-h][1-8][\+\#]?$/.test(content),
+        numberedPiece: /^\d+\.\s*[KQRBN][a-h][1-8][\+\#]?$/.test(content),
+        numberedPawn: /^\d+\.\s*[a-h][1-8][\+\#]?$/.test(content),
+        evaluation: isEvaluation
+      }
+    });
+    
+    // Handle chess evaluations
+    if (isEvaluation && (inline !== false)) {
+      const evalValue = parseFloat(content);
+      let evalClass = '';
+      let evalStyle = {};
+      let colorType = '';
+      
+      if (evalValue > 0) {
+        // Positive evaluation (good for white) - darker green for better contrast
+        colorType = 'GREEN (White advantage)';
+        evalClass = '!bg-green-200 !border !border-green-500 !text-green-900 !font-bold';
+        evalStyle = {
+          backgroundColor: '#bbf7d0 !important',
+          borderColor: '#22c55e !important',
+          color: '#14532d !important'
+        };
+      } else if (evalValue < 0) {
+        // Negative evaluation (good for black) - darker red for better contrast
+        colorType = 'RED (Black advantage)';
+        evalClass = '!bg-red-200 !border !border-red-500 !text-red-900 !font-bold';
+        evalStyle = {
+          backgroundColor: '#fecaca !important',
+          borderColor: '#ef4444 !important',
+          color: '#7f1d1d !important'
+        };
+      } else {
+        // Neutral evaluation - darker gray for better contrast
+        colorType = 'GRAY (Neutral)';
+        evalClass = '!bg-gray-200 !border !border-gray-500 !text-gray-900 !font-bold';
+        evalStyle = {
+          backgroundColor: '#e5e7eb !important',
+          borderColor: '#6b7280 !important',
+          color: '#111827 !important'
+        };
+      }
+      
+      console.log('✅ APPLYING EVALUATION STYLING:', {
+        content,
+        evalValue,
+        colorType,
+        evalClass,
+        evalStyle
+      });
+      
+      return (
+        <code
+          className={`!px-2 !py-1 !rounded-md !shadow-sm !font-mono !text-sm !no-underline ${evalClass}`}
+          style={evalStyle}
+          {...props}
+        >
+          {children}
+        </code>
+      );
+    }
+    
+    if (isChessMove && (inline !== false)) {
       console.log('✅ Applying amber styling to chess move:', content);
       return (
         <code
-          className="bg-amber-50 border border-amber-200 px-2 py-1 rounded-md shadow-sm font-mono text-amber-800 font-semibold"
+          className="!bg-amber-100 !border !border-amber-300 !px-2 !py-1 !rounded-md !shadow-sm !font-mono !text-amber-900 !font-bold !text-sm !no-underline"
+          style={{
+            backgroundColor: '#fef3c7 !important',
+            borderColor: '#f59e0b !important',
+            color: '#78350f !important'
+          }}
           {...props}
         >
           {children}
@@ -60,6 +154,7 @@ const components = {
     }
     
     // Default code styling
+    console.log('❌ Not a chess move, using default styling:', content);
     return (
       <code className={className} {...props}>
         {children}
@@ -70,7 +165,25 @@ const components = {
 
 // Since the AI should already be adding backticks, we don't need complex preprocessing
 const preprocessChessNotation = (text: string): string => {
-  return text; // Pass through unchanged since AI should handle backticks
+  console.log('🔄 Preprocessing text:', text.substring(0, 200) + '...');
+  
+  // Wrap evaluations in backticks if they're not already wrapped
+  // Updated regex to properly capture + and - signs
+  let processed = text.replace(/([+\-]?\d*\.?\d+)(?=\s|$|[^\d\.])/g, (match, evaluation) => {
+    // Check if it's a valid evaluation (not just any number)
+    const isEvaluation = /^[+\-]?\d*\.?\d+$/.test(evaluation);
+    const evalValue = parseFloat(evaluation);
+    
+    // Only wrap if it looks like a chess evaluation (reasonable range)
+    if (isEvaluation && evalValue >= -10 && evalValue <= 10 && evaluation.length >= 2) {
+      console.log('🎯 WRAPPING EVALUATION IN BACKTICKS:', evaluation);
+      return `\`${evaluation}\``;
+    }
+    return match;
+  });
+  
+  console.log('✅ Preprocessed result preview:', processed.substring(0, 200) + '...');
+  return processed;
 };
 
 const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
@@ -212,11 +325,11 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
         <CardContent className="pt-4 pb-4">
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-              <Target className="h-3 w-3 text-blue-600" />
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <FileText className="h-4 w-4 text-white" />
             </div>
             <div className="flex-1">
-              <div className="text-xs font-medium text-blue-900 mb-1">AI Analysis</div>
+              <div className="text-sm font-semibold text-blue-900 mb-1">Summary</div>
               <div className="text-sm text-blue-800 leading-relaxed">
                 {currentMomentData.reason}
               </div>
@@ -280,15 +393,15 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                 Analysis
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               {/* Explanation Section */}
               {parsedMoment.explanation && (
-                <div>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-2 flex items-center gap-2">
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-sm text-slate-700 mb-3 flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
                     WHAT HAPPENED
                   </h4>
-                  <div className="prose prose-sm max-w-none">
+                  <div className="prose prose-sm max-w-none text-slate-800">
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
                       {preprocessChessNotation(parsedMoment.explanation)}
                     </ReactMarkdown>
@@ -296,30 +409,13 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                 </div>
               )}
 
-              <Separator />
-
-              {/* Recommendation Section */}
-              {parsedMoment.recommendation && (
-                <div>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-2 flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    RECOMMENDED MOVE
-                  </h4>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-                      {`\`${parsedMoment.recommendation}\``}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-              )}
-
               {/* Why Better Section */}
               {parsedMoment.whyBetter && (
-                <div>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-2">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-sm text-emerald-700 mb-3">
                     WHY IT&apos;S BETTER
                   </h4>
-                  <div className="prose prose-sm max-w-none">
+                  <div className="prose prose-sm max-w-none text-emerald-800">
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
                       {preprocessChessNotation(parsedMoment.whyBetter)}
                     </ReactMarkdown>
@@ -327,21 +423,17 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
                 </div>
               )}
 
-              <Separator />
-
               {/* Principle Section */}
               {parsedMoment.principle && (
-                <div>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-2 flex items-center gap-2">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-sm text-amber-700 mb-3 flex items-center gap-2">
                     <Lightbulb className="h-4 w-4" />
                     KEY PRINCIPLE
                   </h4>
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <div className="prose prose-sm max-w-none text-amber-800">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-                        {preprocessChessNotation(parsedMoment.principle)}
-                      </ReactMarkdown>
-                    </div>
+                  <div className="prose prose-sm max-w-none text-amber-800">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+                      {preprocessChessNotation(parsedMoment.principle)}
+                    </ReactMarkdown>
                   </div>
                 </div>
               )}

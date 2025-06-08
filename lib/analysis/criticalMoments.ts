@@ -8,10 +8,37 @@ export function extractPositionsFromMoves(moves: string): string[] {
     const chess = new Chess();
     const positions: string[] = [chess.fen()]; // Starting position
     
-    // Split moves and apply them
-    const moveList = moves.trim().split(/\s+/);
+    // Check if this is a full PGN or just moves
+    let moveList: string[] = [];
+    
+    if (moves.includes('[Event') || moves.includes('[Site')) {
+      // This is a full PGN, need to extract moves
+      try {
+        // Load the PGN to extract moves properly
+        chess.loadPgn(moves);
+        // Get the move history
+        const history = chess.history();
+        chess.reset(); // Reset to starting position
+        
+        // Apply moves one by one to build positions
+        for (const move of history) {
+          chess.move(move);
+          positions.push(chess.fen());
+        }
+        
+        return positions;
+      } catch (pgnError) {
+        console.error('Error loading PGN:', pgnError);
+        return positions; // Return just starting position
+      }
+    } else {
+      // This is just moves, process as before
+      moveList = moves.trim().split(/\s+/);
+    }
     
     for (const move of moveList) {
+      if (!move.trim()) continue; // Skip empty moves
+      
       try {
         chess.move(move);
         positions.push(chess.fen());
@@ -62,17 +89,26 @@ export async function analyzeCriticalMoments(
       throw new Error('Game is too short to analyze');
     }
     
-    // Create a simplified PGN
-    const chess = new Chess();
-    const moveList = moves.trim().split(/\s+/);
-    for (const move of moveList) {
-      try {
-        chess.move(move);
-      } catch (e) {
-        console.error(`Invalid move: ${move}`);
+    // Check if this is already a PGN or just moves
+    let pgn: string;
+    
+    if (moves.includes('[Event') || moves.includes('[Site')) {
+      // This is already a PGN
+      pgn = moves;
+    } else {
+      // This is just moves, create a PGN
+      const chess = new Chess();
+      const moveList = moves.trim().split(/\s+/);
+      for (const move of moveList) {
+        if (!move.trim()) continue;
+        try {
+          chess.move(move);
+        } catch (e) {
+          console.error(`Invalid move: ${move}`);
+        }
       }
+      pgn = chess.pgn();
     }
-    const pgn = chess.pgn();
     
     // If color not specified but username is, try to determine it
     if (!colorToAnalysis && username) {

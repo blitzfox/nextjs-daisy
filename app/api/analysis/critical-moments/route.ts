@@ -300,7 +300,7 @@ async function extractCriticalMoments(
 
   try {
     const response = await openai.beta.chat.completions.parse({
-      model: "gpt-4o-2024-08-06",
+      model: "gpt-4.1",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -357,7 +357,7 @@ async function extractCriticalMomentsLegacy(
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4.1",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -471,7 +471,7 @@ async function processStreamingMoments(
       // Try structured output first for consistency
       try {
         const structuredResponse = await openai.beta.chat.completions.parse({
-          model: "gpt-4o-2024-08-06",
+          model: "gpt-4.1",
           messages: [
             { role: "user", content: filledPrompt }
           ],
@@ -500,7 +500,7 @@ async function processStreamingMoments(
       
       // Fallback to streaming for real-time updates
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4.1",
         messages: [
           { role: "user", content: filledPrompt }
         ],
@@ -604,7 +604,7 @@ async function processMomentsWithIndividualPrompts(
       await new Promise(resolve => setTimeout(resolve, delay));
       
       const response = await openai.beta.chat.completions.parse({
-        model: "gpt-4o-2024-08-06",
+        model: "gpt-4.1",
         messages: [
           { role: "user", content: filledPrompt }
         ],
@@ -662,7 +662,7 @@ async function processMomentLegacy(
 ): Promise<CriticalMoment> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4.1",
       messages: [
         { role: "user", content: filledPrompt }
       ],

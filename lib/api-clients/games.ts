@@ -4,9 +4,6 @@ import { Game, LichessGame, ChessDotComGame, Platform } from '@/lib/types';
 // Create optimized axios instance with timeout
 const apiClient = axios.create({
   timeout: 10000, // 10 second timeout
-  headers: {
-    'User-Agent': 'Chess-Analysis-App/1.0'
-  }
 });
 
 // Simple memory cache for recent API calls
