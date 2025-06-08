@@ -282,7 +282,7 @@ class ChessEngineAnalyzer {
       const taskId = Math.random().toString(36).substring(2, 10);
       const analysisRequest = {
         fen: position,
-        depth: 24,
+        depth: 20,
         variants: 1,
         taskId
       };
@@ -316,44 +316,57 @@ class ChessEngineAnalyzer {
       try {
         const ws = await this.createWebSocketConnection();
         
-        // FIX: Analyze positions BEFORE moves are played to get the best move for the player about to move
+        // Analyze all positions first, then fix opponents best moves
         const maxPositions = Math.min(this.currentPositions.length, positionsToAnalyze + 1); // +1 for start position
         for (let i = 1; i < maxPositions; i++) { // Skip starting position
           this.currentPositionIndex = i;
           
           try {
-            // Analyze the position BEFORE the move to get the best move for the player about to move
-            const positionBeforeMove = this.currentPositions[i - 1];
-            const analysis = await this.analyzePositionWithEngine(ws, positionBeforeMove);
-            
-            // Update the analysis with the correct move information
+            // Get the move that was actually played
             const moveIdx = i - 1;
             const fullMoveNum = Math.floor(moveIdx / 2) + 1;
             const isWhite = moveIdx % 2 === 0;
+            const actualMovePlayed = this.gameMoves[moveIdx];
             
+            // Analyze the position BEFORE the move to get engine's recommendation
+            const positionBeforeMove = this.currentPositions[i - 1];
+            const analysis = await this.analyzePositionWithEngine(ws, positionBeforeMove);
+            
+            // Set up the move information
             if (isWhite) {
               analysis.moveNumber = `${fullMoveNum}.`;
-              analysis.movePlayed = `${fullMoveNum}. ${this.gameMoves[moveIdx]}`;
+              analysis.movePlayed = `${fullMoveNum}. ${actualMovePlayed}`;
             } else {
               analysis.moveNumber = `${fullMoveNum}...`;
-              analysis.movePlayed = `${fullMoveNum}... ${this.gameMoves[moveIdx]}`;
+              analysis.movePlayed = `${fullMoveNum}... ${actualMovePlayed}`;
             }
             
-            // Set the FEN to the position AFTER the move for reference
+            // Set the FEN to the position AFTER the move (for reference)
             analysis.fen = this.currentPositions[i];
             
-            // Now analysis.bestMove is the best move for the player who was about to move
-            // Generate a proper opponent's response to that best move
-            analysis.opponentsBestMove = this.generateOpponentsBest(analysis.bestMove);
+            // Keep the engine's best move recommendation as-is
+            // analysis.bestMove is already set by the engine
+            
+            // Temporarily set opponentsBestMove to empty - we'll fix this after all analysis
+            analysis.opponentsBestMove = "";
             
             this.analysisResults.push(analysis);
             
-            // Remove artificial delay - Python version has no delays between requests
-            // The engine naturally paces requests based on analysis completion
           } catch (positionError) {
             this.debugLog(`Error analyzing position ${i}: ${positionError}`, "ERROR");
             // Continue with next position
           }
+        }
+        
+        // FIXED: Now set opponents best moves using the Python logic
+        // For each position, the opponent's best move is the best move from the NEXT position
+        for (let i = 0; i < this.analysisResults.length - 1; i++) {
+          this.analysisResults[i].opponentsBestMove = this.analysisResults[i + 1].bestMove;
+        }
+        
+        // For the last position, there's no next move, so set to empty or N/A
+        if (this.analysisResults.length > 0) {
+          this.analysisResults[this.analysisResults.length - 1].opponentsBestMove = "";
         }
         
         ws.close();

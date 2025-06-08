@@ -388,6 +388,7 @@ export default function Home() {
                   criticalMoments={criticalMoments}
                   onMomentChange={handleMomentChange}
                   isAnalyzing={isAnalyzing}
+                  pgn={selectedGame?.pgn}
                 />
                 
                 {/* Audio Player */}

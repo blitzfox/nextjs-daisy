@@ -10,12 +10,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ChevronLeft, ChevronRight, Target, TrendingUp, Lightbulb, BookOpen, FileText } from 'lucide-react';
+import MiniChessBoard from './MiniChessBoard';
+import { Chess } from 'chess.js';
 
 interface AnalysisDisplayProps {
   currentMoment: number;
   criticalMoments: CriticalMoment[];
   onMomentChange: (momentNumber: number) => void;
   isAnalyzing: boolean;
+  pgn?: string;
 }
 
 // Custom components for ReactMarkdown to style chess moves
@@ -167,9 +170,31 @@ const components = {
 const preprocessChessNotation = (text: string): string => {
   console.log('🔄 Preprocessing text:', text.substring(0, 200) + '...');
   
-  // Wrap evaluations in backticks if they're not already wrapped
+  // First, wrap chess moves in backticks if they're not already wrapped
+  let processed = text.replace(/(?<!`)\b([KQRBN]?[a-h]?[x]?[a-h][1-8][\+\#]?|O-O(-O)?[\+\#]?)\b(?!`)/g, (match, move) => {
+    // More comprehensive chess move patterns
+    const isChessMove = (
+      // Standard piece moves: Nf3, Be3, Qd4, Bb5, etc.
+      /^[KQRBN][a-h][1-8][\+\#]?$/.test(move) ||
+      // Pawn moves: e4, a6, h5, c4, etc.
+      /^[a-h][1-8][\+\#]?$/.test(move) ||
+      // Captures: Nxf7, exd5, Bxc6, axb4, dxc3, etc.
+      /^[KQRBN]?[a-h]?x[a-h][1-8][\+\#]?$/.test(move) ||
+      // Castling: O-O, O-O-O
+      /^O-O(-O)?[\+\#]?$/.test(move)
+    );
+    
+    // Don't wrap if it's part of a word or already in backticks
+    if (isChessMove && move.length >= 2 && move.length <= 7) {
+      console.log('🎯 WRAPPING CHESS MOVE IN BACKTICKS:', move);
+      return `\`${move}\``;
+    }
+    return match;
+  });
+  
+  // Then wrap evaluations in backticks if they're not already wrapped
   // Updated regex to properly capture + and - signs
-  let processed = text.replace(/([+\-]?\d*\.?\d+)(?=\s|$|[^\d\.])/g, (match, evaluation) => {
+  processed = processed.replace(/(?<!`)\b([+\-]?\d*\.?\d+)(?=\s|$|[^\d\.])(?!`)/g, (match, evaluation) => {
     // Check if it's a valid evaluation (not just any number)
     const isEvaluation = /^[+\-]?\d*\.?\d+$/.test(evaluation);
     const evalValue = parseFloat(evaluation);
@@ -186,11 +211,48 @@ const preprocessChessNotation = (text: string): string => {
   return processed;
 };
 
+// Utility function to get the position before the move was played using the main game's move history
+const getPositionBeforeMove = (position: number, pgn?: string): string => {
+  if (!pgn) {
+    console.warn('No PGN provided, cannot determine position before move');
+    return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'; // Starting position
+  }
+
+  try {
+    const chess = new Chess();
+    chess.loadPgn(pgn);
+    const moveHistory = chess.history();
+    
+    // Reset to starting position
+    chess.reset();
+    
+    // The position field in CriticalMoment represents the move number (1-based)
+    // We need to play moves up to position - 1 to get the position before that move
+    const targetMoveIndex = position - 1; // Convert to 0-based index
+    
+    // Play moves up to (but not including) the critical move
+    for (let i = 0; i < targetMoveIndex && i < moveHistory.length; i++) {
+      try {
+        chess.move(moveHistory[i]);
+      } catch (error) {
+        console.error('Error replaying move:', moveHistory[i], error);
+        break;
+      }
+    }
+    
+    return chess.fen();
+  } catch (error) {
+    console.warn('Error getting position before move:', error);
+    return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'; // Starting position
+  }
+};
+
 const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
   currentMoment,
   criticalMoments,
   onMomentChange,
-  isAnalyzing
+  isAnalyzing,
+  pgn
 }) => {
   // Parse the critical moment content from the analysis
   const parseCriticalMoment = (analysis: string) => {
@@ -355,30 +417,64 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Target className="h-5 w-5" />
-                  {parsedMoment.move || currentMomentData.moveInfo}
+                  Critical Moment Analysis
                 </CardTitle>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline">
+                  <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
                     {getPhaseIcon(currentMomentData.phase)} {currentMomentData.phase}
                   </Badge>
-                  <Badge className={getEvaluationColor(currentMomentData.evaluation)}>
-                    Eval: {currentMomentData.evaluation}
+                  <Badge className={`${getEvaluationColor(currentMomentData.evaluation)} border font-mono`}>
+                    {parseFloat(currentMomentData.evaluation) > 0 ? '+' : ''}{currentMomentData.evaluation}
                   </Badge>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <div className="text-muted-foreground">Best Move</div>
-                  <div className="font-medium font-mono bg-gray-50 px-2 py-1 rounded shadow-sm border">
-                    {currentMomentData.moveNumber} {currentMomentData.bestMove}
+              {/* Current Move vs Best Move Comparison */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                    Move Actually Played
+                  </div>
+                  <div className="font-mono text-xl font-bold text-red-800 mb-1">
+                    {currentMomentData.moveInfo}
+                  </div>
+                  <div className="text-xs text-red-600">
+                    What happened in the game
                   </div>
                 </div>
-                <div>
-                  <div className="text-muted-foreground">Best Response</div>
-                  <div className="font-medium font-mono bg-gray-50 px-2 py-1 rounded shadow-sm border">
-                    {currentMomentData.moveNumber.includes('.') ? currentMomentData.moveNumber.replace('.', '...') : currentMomentData.moveNumber + '...'} {currentMomentData.opponentsBestMove}
+                
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    Recommended Best Move
+                  </div>
+                  <div className="font-mono text-xl font-bold text-green-800 mb-1">
+                    {currentMomentData.moveNumber} {currentMomentData.bestMove}
+                  </div>
+                  <div className="text-xs text-green-600">
+                    What the engine suggests
+                  </div>
+                </div>
+              </div>
+
+              {/* Mini Chess Board - Now below the move comparison */}
+              <div className="flex justify-center">
+                <div className="text-center">
+                  <div className="text-sm font-medium text-gray-800 mb-2 px-3">Position After Best Move</div>
+                  <MiniChessBoard 
+                    fen={getPositionBeforeMove(currentMomentData.position, pgn)}
+                    bestMove={currentMomentData.bestMove}
+                    size={250}
+                    showCoordinates={true}
+                    theme="blue"
+                    className="shadow-sm"
+                    showMoveLabel={false}
+                    playBestMove={true}
+                  />
+                  <div className="text-xs text-gray-600 mt-3 px-3 leading-relaxed">
+                    What the position would look like
                   </div>
                 </div>
               </div>
