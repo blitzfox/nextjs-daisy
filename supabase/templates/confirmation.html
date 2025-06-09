@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to ChessCoach!</title>
+    <title>Welcome to AI Chess Coach!</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
@@ -17,7 +17,7 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             color: #374151;
-            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #ede9fe 100%);
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%);
             margin: 0;
             padding: 20px;
         }
@@ -25,16 +25,16 @@
         .container {
             max-width: 600px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(24px);
             border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.08);
             overflow: hidden;
         }
         
         .header {
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #06b6d4 100%);
             padding: 40px 32px;
             text-align: center;
             position: relative;
@@ -47,32 +47,12 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.3;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
         }
         
         .logo {
             position: relative;
             z-index: 1;
-        }
-        
-        .logo-icon {
-            width: 64px;
-            height: 64px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 16px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .sparkles {
-            width: 32px;
-            height: 32px;
-            fill: white;
         }
         
         .brand-name {
@@ -91,14 +71,14 @@
         
         .welcome-badge {
             display: inline-block;
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            color: #92400e;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1d4ed8;
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 14px;
             font-weight: 600;
             margin-bottom: 24px;
-            border: 1px solid #f59e0b;
+            border: 1px solid #3b82f6;
         }
         
         .title {
@@ -118,14 +98,14 @@
         
         .confirm-button {
             display: inline-block;
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #06b6d4 100%);
             color: white;
             text-decoration: none;
             padding: 16px 32px;
             border-radius: 16px;
             font-weight: 600;
             font-size: 16px;
-            box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.4);
             transition: all 0.3s ease;
             border: 1px solid rgba(255, 255, 255, 0.2);
             margin-bottom: 32px;
@@ -133,7 +113,7 @@
         
         .confirm-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 15px 35px -5px rgba(139, 92, 246, 0.5);
+            box-shadow: 0 12px 24px -4px rgba(59, 130, 246, 0.5);
         }
         
         .features {
@@ -174,7 +154,7 @@
         .feature-icon {
             width: 24px;
             height: 24px;
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -236,13 +216,13 @@
         }
         
         .security-note {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border: 1px solid #f59e0b;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 1px solid #3b82f6;
             border-radius: 12px;
             padding: 16px;
             margin: 24px 0;
             font-size: 14px;
-            color: #92400e;
+            color: #1d4ed8;
         }
         
         .security-icon {
@@ -269,7 +249,7 @@
         }
         
         .footer-links a {
-            color: #8b5cf6;
+            color: #3b82f6;
             text-decoration: none;
             margin: 0 8px;
         }
@@ -323,48 +303,20 @@
         <!-- Header -->
         <div class="header">
             <div class="logo">
-                <div class="logo-icon">
-                    <svg class="sparkles" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423L16.5 15.75l.394 1.183a2.25 2.25 0 001.423 1.423L19.5 18.75l-1.183.394a2.25 2.25 0 00-1.423 1.423z" fill="currentColor"/>
-                    </svg>
-                </div>
-                <h1 class="brand-name">ChessCoach</h1>
+                <h1 class="brand-name">AI Chess Coach</h1>
             </div>
         </div>
         
         <!-- Content -->
         <div class="content">
-            <div class="welcome-badge">🎉 Welcome to ChessCoach!</div>
+            <div class="welcome-badge">🎉 Welcome!</div>
             <h2 class="title">Confirm your account</h2>
-            <p class="subtitle">You're one click away from starting your chess mastery journey</p>
+            <p class="subtitle">One click to start your chess journey</p>
             
             <!-- Confirm Button -->
             <a href="{{ .ConfirmationURL }}" class="confirm-button">
-                ✨ Confirm Account & Get Started
+                ✨ Confirm Account
             </a>
-            
-            <!-- Features Section -->
-            <div class="features">
-                <h3 class="features-title">What's waiting for you:</h3>
-                <ul class="feature-list">
-                    <li class="feature-item">
-                        <div class="feature-icon">🎯</div>
-                        <span>Personalized chess coaching tailored to your skill level</span>
-                    </li>
-                    <li class="feature-item">
-                        <div class="feature-icon">📊</div>
-                        <span>Advanced game analysis and improvement insights</span>
-                    </li>
-                    <li class="feature-item">
-                        <div class="feature-icon">🏆</div>
-                        <span>Track your progress and celebrate milestones</span>
-                    </li>
-                    <li class="feature-item">
-                        <div class="feature-icon">🧠</div>
-                        <span>Interactive puzzles and training exercises</span>
-                    </li>
-                </ul>
-            </div>
             
             <!-- Divider -->
             <div class="divider">
@@ -373,26 +325,24 @@
             
             <!-- OTP Section -->
             <div class="otp-section">
-                <div class="otp-label">Enter this 6-digit code in your browser:</div>
+                <div class="otp-label">6-digit code:</div>
                 <div class="otp-code">{{ .Token }}</div>
             </div>
             
             <!-- Security Note -->
             <div class="security-note">
                 <span class="security-icon">🔒</span>
-                <strong>Security tip:</strong> This link expires in 1 hour and can only be used once. If you didn't create this account, you can safely ignore this email.
+                Link expires in 1 hour
             </div>
         </div>
         
         <!-- Footer -->
         <div class="footer">
             <p class="footer-text">
-                Welcome to ChessCoach! We're excited to help you improve your chess game.<br>
-                Get ready to unlock your chess potential with personalized coaching.
+                Ready to improve your chess game?
             </p>
             <div class="footer-links">
-                <a href="{{ .SiteURL }}">Visit ChessCoach</a> •
-                <a href="{{ .SiteURL }}/privacy">Privacy Policy</a> •
+                <a href="{{ .SiteURL }}">Visit AI Chess Coach</a> •
                 <a href="{{ .SiteURL }}/support">Support</a>
             </div>
         </div>
